@@ -45,6 +45,7 @@ def get_ip_address(ifname):
     except OSError:
         return None
 
+#Not a sensitive key, just a test value
 key = b'Ki2SJWIXhuLG-4KrNhEdj3AFt_v72tmvgOH1_ExD16A='
 
 class WebSocket:
@@ -73,12 +74,12 @@ class WebSocket:
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ssl_path = pathlib.Path(__file__).with_name("certs").joinpath(self.device_type)
         #ssl_cert = ssl_path.joinpath("mvtrunner.crt")
-        with open(ssl_path.joinpath("mvtrunner.enc"), "rb") as file:
+        with open(ssl_path.joinpath("test_mvtrunner.enc"), "rb") as file:
             encrypted_data = file.read()
         decrypted_data = Fernet(key).decrypt(encrypted_data)
-        with open(ssl_path.joinpath("mvtrunner.key"), "wb") as file:
+        with open(ssl_path.joinpath("test_mvtrunner.key"), "wb") as file:
             file.write(decrypted_data)
-        ssl_context.load_cert_chain(ssl_path.joinpath("mvtrunner.crt"), ssl_path.joinpath("mvtrunner.key"))
+        ssl_context.load_cert_chain(ssl_path.joinpath("test_mvtrunner.crt"), ssl_path.joinpath("test_mvtrunner.key"))
         with serve(self.msg_handler, get_ip_address(self.ws_nw_interface) , 10199, ssl=ssl_context) as self.server:
             self.logger.debug("MVT runner : WSS created")
             self.server.serve_forever()
