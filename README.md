@@ -10,7 +10,7 @@
     --profile PROFILE // required, MVT profile e.g. default
     --result_dir // directory to store result files
     --pack_result // pack result directory into .tar.gz
-    --mvt_url // MVT application address, by default "http://mvt.onemw.net"
+    --mvt_url // MVT application address
     --ws_nw_interface // Network interface used for websocket creation, default value is eth0
     --device_type //Device type used. Some functionalities are device specific. Use 'RDK' for RDK VA. For LGI devices, use 'LGI'. Default is 'LGI'
 
@@ -33,4 +33,4 @@ docker run --rm --net=host --user=mvt-runner --env SSHPASS=$MVT_RUNNER_SSH_PASS 
 ```
 # Note
     Since secure websocket is used for communication with MVT executing on the STB, a self signed SSL certifcate with Common Name (CN) set to the IP or Fully Qualified Domain Name (FQDN) of the machine where MVT Runner is hosted, will be used. This should be whitelisted in the STB where MVT will be loaded. Also, the corresponding private key used should be encrypted with key: b'Ki2SJWIXhuLG-4KrNhEdj3AFt_v72tmvgOH1_ExD16A='
-    During runtime, based on the device type (read from --device_type parameter) the certificate and encrypted key will be taken from fixtures/certs/LGI path for 'LGI' devices and fixtures/certs/RDK for 'RDK' device it will be from fixtures/certs/RDK
+    During runtime, based on the device type (read from --device_type parameter) the certificate and encrypted key will be taken from fixtures/certs/LGI path for 'LGI' devices and fixtures/certs/RDK path for 'RDK' devices
