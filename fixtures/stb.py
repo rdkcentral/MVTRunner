@@ -134,23 +134,6 @@ class STB:
         else:
             self.shell(f"curl -d \'{{\"method\": \"org.rdk.System.1.setPowerState\", \"params\": {{\"powerState\": \"ON\"}}}}\' http://127.0.0.1:9998/jsonrpc")
 
-    def start_webkit(self):
-        self.shell(
-            "dbus-send --system --print-reply --dest=com.lgi.rdk.utils.awc.server "
-            "/com/lgi/rdk/utils/awc/awc com.lgi.rdk.utils.awc.awc.Start string:'thunderwpe' "
-            "array:string:'https://widgets.metrological.com/lightning/liberty/2e3c4fc22f0d35e3eb7fdb47eb7d4658#boot'"
-        )
-        self.logger.debug("WebKit started")
-
-    def stop_webkit(self, clear_cache=False):
-        self.shell(
-            "dbus-send --system --print-reply --dest=com.lgi.rdk.utils.awc.server "
-            "/com/lgi/rdk/utils/awc/awc com.lgi.rdk.utils.awc.awc.Stop uint32:`pidof WPEWebProcess` int32:0"
-        )
-        self.logger.debug("WebKit stopped")
-        if clear_cache:
-            self.shell("rm -rf /mnt/wpe_cache/*")
-
     def start_mvt_app(self):
         self.logger.debug("Start MVT application")
         if 'LGI' in self.device_type:
