@@ -167,7 +167,7 @@ class MVTRemoteRunner:
             for i in range(1, 25):
                 self.logger.debug(f"key press : {i}")
                 self.mvtdriver.stb.key_input(85)
-                sleep(1)
+                sleep(2)
                 if self._browser_has_crashed():
                     if i > 19:
                         self.collect_screenshot()
