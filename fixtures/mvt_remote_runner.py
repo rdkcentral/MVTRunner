@@ -25,6 +25,15 @@ from utils import retry_on_failure
 
 SCREENSHOTS_DIR = "screenshots"
 MVT_RESULTS_DIR = "results"
+MVT_EXTENSION_TESTS = {
+    "html-test",
+    "css-test",
+    "js-test",
+    "system-font-test",
+    "gfx-test",
+    "lightning-test",
+    "application-memory-test",
+}
 
 
 def _fix_test_results_ver_type(results):
@@ -53,11 +62,14 @@ class MVTRemoteRunner:
         return os.environ.get("PYTEST_CURRENT_TEST").split(":")[-1].split(" ")[0].replace("[", "_").replace("]", "")
 
     def run(self, suite, timeout=1800):
+        self._last_suite = suite
         self.started = True
         self._t0 = time()
         self.logger.info(f" {self.get_test_name()} ".center(80, "-"))
 
         self._load_suite(suite)
+        if suite in MVT_EXTENSION_TESTS:
+            return
         self._num_of_tests = int(self.mvtdriver.websocket.send_message("getNumberOfTests"))
         self._get_results()
 
@@ -90,19 +102,80 @@ class MVTRemoteRunner:
         failed_tests = [test["name"] for test in self._results["tests"] if test["status"] == "failed"]
         self.logger.assertion(not failed_tests, f"{len(failed_tests)} test failed: {failed_tests}.")
 
-    def collect_screenshot(self):
-        screenshot_path = os.path.join(self._result_dir, SCREENSHOTS_DIR, f"{self.get_test_name()}.png")
+    def collect_screenshot(self, suffix=None):
+        base_name = self.get_test_name()
+        if suffix:
+            file_name = f"{base_name}_{suffix}.png"
+        else:
+            file_name = f"{base_name}.png"
+        screenshot_path = os.path.join(self._result_dir, SCREENSHOTS_DIR, file_name)
         self.mvtdriver.stb.take_screenshot(screenshot_path)
 
     def save_result(self):
+        if getattr(self, "_last_suite", None) in MVT_EXTENSION_TESTS:
+            return
         if self._result_dir:
             file_name = f"{self.get_test_name()}_{self.mvtdriver.stb.profile}_result.json"
             json_result = os.path.join(self._result_dir, MVT_RESULTS_DIR, file_name)
             with open(json_result, "w", encoding="utf-8") as f:
                 json.dump(self._results, f, indent=4)
 
+    def _open_and_press(self, page, keys, sleep_time=20, screenshot_suffix=None, delay=None):
+        suite_url = f"{self.mvtdriver.stb.mvt_url}/{page}"
+        self.logger.debug(f"Loading page: {suite_url}")
+
+        self.mvtdriver.stb.start_mvt_suite(suite_url)
+        for key in keys:
+            self.mvtdriver.stb.key_input(key)
+            if delay:
+                sleep(delay)
+        sleep(sleep_time)
+        self.collect_screenshot(screenshot_suffix)
+
     @retry_on_failure(3)
     def _load_suite(self, suite):
+        if suite == "html-test":
+            self._open_and_press("html-tests.html", [85])
+            return
+
+        if suite == "css-test":
+            self._open_and_press("css-tests.html", [85])
+            return
+
+        if suite == "js-test":
+            self._open_and_press("js-tests.html", [85])
+            return
+
+        if suite == "system-font-test":
+            self._open_and_press("system-fonts.html", [85])
+            return
+
+        if suite == "gfx-test":
+            self._open_and_press("gfx-test.html", [85], screenshot_suffix="1")
+            self._open_and_press("gfx-test.html", [82, 85], screenshot_suffix="2")
+            return
+
+        if suite == "lightning-test":
+            self._open_and_press("lightningjs_test.html", [85, 82, 84, 84, 85], screenshot_suffix="1", delay=5)
+            self._open_and_press("lightningjs_test.html", [82, 85], screenshot_suffix="2")
+            return
+
+        if suite == "application-memory-test":
+            suite_url = f"{self.mvtdriver.stb.mvt_url}/application_memory.html"
+            self.logger.debug(f"Loading page: {suite_url}")
+            self.mvtdriver.stb.start_mvt_suite(suite_url)
+            for i in range(1, 25):
+                self.logger.debug(f"key press : {i}")
+                self.mvtdriver.stb.key_input(85)
+                sleep(1)
+                if self._browser_has_crashed():
+                    if i > 19:
+                        self.collect_screenshot()
+                    return
+
+            sleep(20)
+            return
+
         suite_url = f"{self.mvtdriver.stb.mvt_url}/?test_type={suite}&profile={self.mvtdriver.stb.profile}&command=run"
         self.logger.debug(f"Load MVT test suite: {suite_url}")
         self.mvtdriver.stb.start_mvt_suite(suite_url)

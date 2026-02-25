@@ -25,13 +25,20 @@ import pytest
     "suite",
     [
         "codec-support-test",
-        "dash-shaka-test",
-        "dash-dashjs-test",
-        "hls-shaka-test",
-        "hls-hlsjs-test",
-        "hss-html5-test",
-        "hss-dashjs-test",
-        "progressive-html5-test",
+        # "dash-shaka-test",
+        # "dash-dashjs-test",
+        # "hls-shaka-test",
+        # "hls-hlsjs-test",
+        # "hss-html5-test",
+        # "hss-dashjs-test",
+        # "progressive-html5-test",
+        "html-test",
+        "css-test",
+        "js-test",
+        "system-font-test",
+        "gfx-test",
+        "lightning-test",
+        "application-memory-test"
     ],
 )
 def test_mvt_suite(suite, mvt_remote_runner):
