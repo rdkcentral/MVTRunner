@@ -19,7 +19,7 @@
 
 import json
 import pytest
-from time import sleep
+from time import sleep, time
 from utils import HTTP_CONTENT_TYPE_JSON, wait_for, retry_on_failure
 
 
@@ -30,11 +30,15 @@ class MvtDriver:
         self.websocket = websocket
         self._load_mvt()
 
-    def wait_until_testlist_visible(self):
-        num_test = self.websocket.send_message("getNumberOfTests")
-        if(num_test != ''):
-            return True
-        return False
+    def wait_until_testlist_visible(self, timeout=60):
+        start = time()
+        while time() - start < timeout:
+            num_test = self.websocket.send_message("getNumberOfTests")
+            if num_test not in ("", None):
+                self.logger.debug(f"Test suite loaded with {num_test} test cases")
+                return True
+            sleep(1)
+        raise TimeoutError("MVT test list did not become visible in time")
 
     @retry_on_failure(3)
     def is_js_loaded(self):
