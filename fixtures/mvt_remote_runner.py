@@ -25,6 +25,9 @@ from utils import retry_on_failure
 
 SCREENSHOTS_DIR = "screenshots"
 MVT_RESULTS_DIR = "results"
+KEY_OK = 85
+KEY_DOWN = 82
+KEY_RIGHT = 84
 MVT_EXTENSION_TESTS = {
     "html-test",
     "css-test",
@@ -135,29 +138,29 @@ class MVTRemoteRunner:
     @retry_on_failure(3)
     def _load_suite(self, suite):
         if suite == "html-test":
-            self._open_and_press("html-tests.html", [85])
+            self._open_and_press("html-tests.html", [KEY_OK])
             return
 
         if suite == "css-test":
-            self._open_and_press("css-tests.html", [85])
+            self._open_and_press("css-tests.html", [KEY_OK])
             return
 
         if suite == "js-test":
-            self._open_and_press("js-tests.html", [85])
+            self._open_and_press("js-tests.html", [KEY_OK])
             return
 
         if suite == "system-font-test":
-            self._open_and_press("system-fonts.html", [85])
+            self._open_and_press("system-fonts.html", [KEY_OK])
             return
 
         if suite == "gfx-test":
-            self._open_and_press("gfx-test.html", [85], screenshot_suffix="1")
-            self._open_and_press("gfx-test.html", [82, 85], screenshot_suffix="2")
+            self._open_and_press("gfx-test.html", [KEY_OK], screenshot_suffix="1")
+            self._open_and_press("gfx-test.html", [KEY_DOWN, KEY_OK], screenshot_suffix="2")
             return
 
         if suite == "lightning-test":
-            self._open_and_press("lightningjs_test.html", [85, 82, 84, 84, 85], screenshot_suffix="1", delay=5)
-            self._open_and_press("lightningjs_test.html", [82, 85], screenshot_suffix="2")
+            self._open_and_press("lightningjs_test.html", [KEY_OK, KEY_DOWN, KEY_RIGHT, KEY_RIGHT, KEY_OK], screenshot_suffix="1", delay=5)
+            self._open_and_press("lightningjs_test.html", [KEY_DOWN, KEY_OK], screenshot_suffix="2")
             return
 
         if suite == "application-memory-test":
@@ -166,7 +169,7 @@ class MVTRemoteRunner:
             self.mvtdriver.stb.start_mvt_suite(suite_url)
             for i in range(1, 25):
                 self.logger.debug(f"key press : {i}")
-                self.mvtdriver.stb.key_input(85)
+                self.mvtdriver.stb.key_input(KEY_OK)
                 sleep(2)
                 if self._browser_has_crashed():
                     if i > 19:
