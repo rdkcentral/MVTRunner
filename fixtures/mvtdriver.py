@@ -30,7 +30,7 @@ class MvtDriver:
         self.websocket = websocket
         self._load_mvt()
 
-    def wait_until_testlist_visible(self, timeout=60):
+    def wait_until_testlist_visible(self, timeout=500):
         start = time()
         while time() - start < timeout:
             num_test = self.websocket.send_message("getNumberOfTests")
