@@ -152,6 +152,25 @@ class STB:
                 )
         else:
             self.shell(f"curl -d \'{{\"method\": \"org.rdk.System.1.setPowerState\", \"params\": {{\"powerState\": \"ON\"}}}}\' http://127.0.0.1:9998/jsonrpc")
+            
+    def start_webkit(self):
+        if 'LGI' in self.device_type:
+            self.shell(
+                "dbus-send --system --print-reply --dest=com.lgi.rdk.utils.awc.server "
+                "/com/lgi/rdk/utils/awc/awc com.lgi.rdk.utils.awc.awc.Start string:'thunderwpe' "
+                "array:string:'about:blank'"
+            )
+            self.logger.debug("WebKit started")
+            
+    def stop_webkit(self, clear_cache=False):
+        if 'LGI' in self.device_type:
+            self.shell(
+                "dbus-send --system --print-reply --dest=com.lgi.rdk.utils.awc.server "
+                "/com/lgi/rdk/utils/awc/awc com.lgi.rdk.utils.awc.awc.Stop uint32:`pidof WPEWebProcess` int32:0"
+            )
+            self.logger.debug("WebKit stopped")
+            if clear_cache:
+                self.shell("rm -rf /mnt/wpe_cache/*")
 
     def start_mvt_app(self):
         self.logger.debug("Start MVT application")
@@ -187,11 +206,6 @@ class STB:
             self.shell(f"curl -d \'{{\"method\": \"org.rdk.RDKShell.1.generateKey\", \"params\": {{\"keys\": [{{\"keyCode\": {keycode}, \"modifiers\": [],  \"delay\": 0.3}}] }}}}\' http://127.0.0.1:9998/jsonrpc")
         sleep(2)
 
-    def start_mvt_suite(self, url):
-        self.logger.debug("Starting MVT suite for url " + url)
-        self.shell(f'curl -d \'{{"url": "{url}"}}\' http://localhost:9998/Service/WebKitBrowser/URL')
-        sleep(5)
-
     def _start_mvt_app_flt(self):
         self.logger.debug(
             self.shell(f'curl -d \'{"url": "{self.mvt_url}"}\' http://localhost:9998/Service/WebKitBrowser/URL')
@@ -207,6 +221,9 @@ class STB:
         self.shell("/usr/sbin/iptables -P OUTPUT ACCEPT")
         self.shell("/usr/sbin/iptables -F")
         self.logger.debug("iptables cleared")
+        
+    def _get_iptables_rules(self):
+        return self.shell("/usr/sbin/iptables -L", ignore_stderr=False)
 
     def _get_stb_build_variant(self):
         box_build = self.shell("cat /etc/version")
