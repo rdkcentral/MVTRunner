@@ -38,6 +38,10 @@ def mvt_url(pytestconfig):
     return pytestconfig.getoption("mvt_url")
 
 @pytest.fixture(scope="session")
+def ws_nw_interface(pytestconfig):
+    return pytestconfig.getoption("ws_nw_interface")
+
+@pytest.fixture(scope="session")
 def device_type(pytestconfig):
     return pytestconfig.getoption("device_type")
 

@@ -38,10 +38,6 @@ class WebDriver:
         self.stb = stb
         self._enable_automation()
         self._start_webdriver()
-        #self.logger.debug("_start_webdriver 1")
-        #sleep(5) #PDP
-        #self._start_webdriver() #PDP
-        #self.logger.debug("_start_webdriver 2")#PDP
         self._connect_webdriver()
         self.logger.debug(f"Webdriver connection established: {self.stb.ip}")
         self._load_mvt()
