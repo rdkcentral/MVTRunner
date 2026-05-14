@@ -152,6 +152,22 @@ class STB:
                 )
         else:
             self.shell(f"curl -d \'{{\"method\": \"org.rdk.System.1.setPowerState\", \"params\": {{\"powerState\": \"ON\"}}}}\' http://127.0.0.1:9998/jsonrpc")
+            
+    def start_webkit(self):
+        self.shell("curl -d \'{\"method\": \"Controller.1.activate\", \"params\":{\"callsign\":\"WebKitBrowser\"}}\' http://127.0.0.1:9998/jsonrpc")
+        self.logger.debug("WebKit started")
+            
+    def stop_webkit(self, clear_cache=False):
+        if 'LGI' in self.device_type:
+            self.shell(
+                "dbus-send --system --print-reply --dest=com.lgi.rdk.utils.awc.server "
+                "/com/lgi/rdk/utils/awc/awc com.lgi.rdk.utils.awc.awc.Stop uint32:`pidof WPEWebProcess` int32:0"
+            )
+        else:
+            self.shell("curl -d \'{\"method\": \"Controller.1.deactivate\", \"params\":{\"callsign\":\"WebKitBrowser\"}}\' http://127.0.0.1:9998/jsonrpc")#PDP
+        self.logger.debug("WebKit stopped")
+        if clear_cache:
+            self.shell("rm -rf /mnt/wpe_cache/*")
 
     def start_mvt_app(self):
         self.logger.debug("Start MVT application")
@@ -207,6 +223,9 @@ class STB:
         self.shell("/usr/sbin/iptables -P OUTPUT ACCEPT")
         self.shell("/usr/sbin/iptables -F")
         self.logger.debug("iptables cleared")
+        
+    def _get_iptables_rules(self):
+        return self.shell("/usr/sbin/iptables -L", ignore_stderr=False)
 
     def _get_stb_build_variant(self):
         box_build = self.shell("cat /etc/version")

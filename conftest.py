@@ -23,6 +23,7 @@ pytest_plugins = [
     "fixtures.stb",
     "fixtures.mvtdriver",
     "fixtures.websocket",
+    "fixtures.webdriver",
 ]
 
 

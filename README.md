@@ -31,6 +31,3 @@ mkdir -p $MVT_RUNNER_RESULTS_DIR
 # Run mvt-runner container, execute all tests and store results
 docker run --rm --net=host --user=mvt-runner --env SSHPASS=$MVT_RUNNER_SSH_PASS --env STB_PASSWORD=$MVT_RUNNER_SSH_PASS -v $MVT_RUNNER_RESULTS_DIR:/mvt-results mvt-runner -s --ip $MVT_RUNNER_STB_IP --profile default --result_dir /mvt-results
 ```
-# Note
-    Since secure websocket is used for communication with MVT executing on the STB, a self signed SSL certifcate with Common Name (CN) set to the IP or Fully Qualified Domain Name (FQDN) of the machine where MVT Runner is hosted, will be used. This should be whitelisted in the STB where MVT will be loaded. Also, the corresponding private key used should be encrypted with key: b'Ki2SJWIXhuLG-4KrNhEdj3AFt_v72tmvgOH1_ExD16A='
-    During runtime, based on the device type (read from --device_type parameter) the certificate and encrypted key will be taken from fixtures/certs/LGI path for 'LGI' devices and fixtures/certs/RDK path for 'RDK' devices
