@@ -142,7 +142,22 @@ class MVTRemoteRunner:
             self.webdriver.driver.save_screenshot(temp_file)
             temp_files.append(temp_file)
 
-        self.stitch_images(temp_files, screenshot_path)
+        if "css" in self.get_test_name():
+            total = len(temp_files)
+            quarter = (total + 3) // 4
+
+            for i in range(4):
+                start = i * quarter
+                end = min((i + 1) * quarter, total)
+
+                if start >= total:
+                    break
+
+                output = screenshot_path.replace(".png", f"_part{i + 1}.png")
+                self.stitch_images(temp_files[start:end], output)
+
+        else:
+            self.stitch_images(temp_files, screenshot_path)
 
     def collect_screenshot(self, suffix=None):
         base_name = self.get_test_name()
