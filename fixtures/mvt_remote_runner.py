@@ -107,20 +107,33 @@ class MVTRemoteRunner:
         self.logger.assertion(not failed_tests, f"{len(failed_tests)} test failed: {failed_tests}.")
 
     def stitch_images(self, image_files, output_file):
-        images = [Image.open(img) for img in image_files]
-        width = images[0].width
-        total_height = sum(img.height for img in images)
-        stitched = Image.new("RGB", (width, total_height))
-        y_offset = 0
+        images = []
+        try:
+            for path in image_files:
+                images.append(Image.open(path))
 
-        for img in images:
-            stitched.paste(img, (0, y_offset))
-            y_offset += img.height
+            if not images:
+                    return
 
-        stitched.save(output_file)
+            width = max(img.width for img in images)
+            total_height = sum(img.height for img in images)
+            stitched = Image.new(images[0].mode, (width, total_height))
+            y_offset = 0
 
-        for img in image_files:
-            os.remove(img)
+            for img in images:
+                stitched.paste(img, (0, y_offset))
+                y_offset += img.height
+
+            stitched.save(output_file)
+        finally:
+                for img in images:
+                    try:
+                        img.close()
+                    except Exception:
+                        pass
+                for path in image_files:
+                    if os.path.exists(path):
+                        os.remove(path)
 
     def collect_fullpage_screenshot(self, screenshot_path):
         page_height = self.webdriver.driver.execute_script("return document.documentElement.scrollHeight")
