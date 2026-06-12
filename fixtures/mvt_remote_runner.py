@@ -113,7 +113,7 @@ class MVTRemoteRunner:
                 images.append(Image.open(path))
 
             if not images:
-                    return
+                return
 
             width = max(img.width for img in images)
             total_height = sum(img.height for img in images)
@@ -126,14 +126,14 @@ class MVTRemoteRunner:
 
             stitched.save(output_file)
         finally:
-                for img in images:
-                    try:
-                        img.close()
-                    except Exception:
-                        pass
-                for path in image_files:
-                    if os.path.exists(path):
-                        os.remove(path)
+            for img in images:
+                try:
+                    img.close()
+                except Exception:
+                    pass
+            for path in image_files:
+                if os.path.exists(path):
+                    os.remove(path)
 
     def collect_fullpage_screenshot(self, screenshot_path):
         page_height = self.webdriver.driver.execute_script("return document.documentElement.scrollHeight")
