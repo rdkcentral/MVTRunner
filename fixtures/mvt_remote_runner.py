@@ -22,6 +22,7 @@ import os
 import pytest
 from time import sleep, time
 from utils import retry_on_failure
+from PIL import Image
 
 SCREENSHOTS_DIR = "screenshots"
 MVT_RESULTS_DIR = "results"
@@ -105,6 +106,72 @@ class MVTRemoteRunner:
         failed_tests = [test["name"] for test in self._results["tests"] if test["status"] == "failed"]
         self.logger.assertion(not failed_tests, f"{len(failed_tests)} test failed: {failed_tests}.")
 
+    def stitch_images(self, image_files, output_file):
+        images = []
+        try:
+            for path in image_files:
+                images.append(Image.open(path))
+
+            if not images:
+                return
+
+            width = max(img.width for img in images)
+            total_height = sum(img.height for img in images)
+            stitched = Image.new(images[0].mode, (width, total_height))
+            y_offset = 0
+
+            for img in images:
+                stitched.paste(img, (0, y_offset))
+                y_offset += img.height
+
+            stitched.save(output_file)
+        finally:
+            for img in images:
+                try:
+                    img.close()
+                except Exception:
+                    pass
+            for path in image_files:
+                if os.path.exists(path):
+                    os.remove(path)
+
+    def collect_fullpage_screenshot(self, screenshot_path):
+        page_height = self.webdriver.driver.execute_script("return document.documentElement.scrollHeight")
+        visible_height = self.webdriver.driver.execute_script("return window.innerHeight")
+
+        if page_height <= visible_height:
+            self.webdriver.driver.save_screenshot(screenshot_path)
+            return
+
+        self.logger.debug(f"Page height={page_height}, visible height={visible_height}")
+        temp_files = []
+        positions = list(range(0, page_height, visible_height))
+
+        for i, y in enumerate(positions):
+
+            self.webdriver.driver.execute_script(f"window.scrollTo(0, {y})")
+            sleep(1)
+            temp_file = screenshot_path.replace(".png", f"_part_{i}.png")
+            self.webdriver.driver.save_screenshot(temp_file)
+            temp_files.append(temp_file)
+
+        if "css" in self.get_test_name():
+            total = len(temp_files)
+            quarter = (total + 3) // 4
+
+            for i in range(4):
+                start = i * quarter
+                end = min((i + 1) * quarter, total)
+
+                if start >= total:
+                    break
+
+                output = screenshot_path.replace(".png", f"_part{i + 1}.png")
+                self.stitch_images(temp_files[start:end], output)
+
+        else:
+            self.stitch_images(temp_files, screenshot_path)
+
     def collect_screenshot(self, suffix=None):
         base_name = self.get_test_name()
         if suffix:
@@ -112,7 +179,7 @@ class MVTRemoteRunner:
         else:
             file_name = f"{base_name}.png"
         screenshot_path = os.path.join(self._result_dir, SCREENSHOTS_DIR, file_name)
-        self.webdriver.stb.take_screenshot(screenshot_path)
+        self.collect_fullpage_screenshot(screenshot_path)
 
     def save_result(self):
         if getattr(self, "_last_suite", None) in MVT_EXTENSION_TESTS:
