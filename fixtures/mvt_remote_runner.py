@@ -23,6 +23,7 @@ import pytest
 from time import sleep, time
 from utils import retry_on_failure
 from PIL import Image
+from selenium.webdriver.common.by import By
 
 SCREENSHOTS_DIR = "screenshots"
 MVT_RESULTS_DIR = "results"
@@ -136,41 +137,58 @@ class MVTRemoteRunner:
                     os.remove(path)
 
     def collect_fullpage_screenshot(self, screenshot_path):
-        page_height = self.webdriver.driver.execute_script("return document.documentElement.scrollHeight")
-        visible_height = self.webdriver.driver.execute_script("return window.innerHeight")
+        try:
+            iframe = self.webdriver.driver.find_element(By.TAG_NAME, "iframe")
+            self.webdriver.driver.switch_to.frame(iframe)
+            iframe_mode = True
+        except Exception:
+            iframe_mode = False
 
-        if page_height <= visible_height:
-            self.webdriver.driver.save_screenshot(screenshot_path)
-            return
+        try:
+            page_height = self.webdriver.driver.execute_script(
+                "return document.documentElement.scrollHeight"
+            )
 
-        self.logger.debug(f"Page height={page_height}, visible height={visible_height}")
-        temp_files = []
-        positions = list(range(0, page_height, visible_height))
+            visible_height = self.webdriver.driver.execute_script(
+                "return window.innerHeight"
+            )
 
-        for i, y in enumerate(positions):
+            if page_height <= visible_height:
+                self.webdriver.driver.save_screenshot(screenshot_path)
+                return
 
-            self.webdriver.driver.execute_script(f"window.scrollTo(0, {y})")
-            sleep(1)
-            temp_file = screenshot_path.replace(".png", f"_part_{i}.png")
-            self.webdriver.driver.save_screenshot(temp_file)
-            temp_files.append(temp_file)
+            self.logger.debug(f"Page height={page_height}, visible height={visible_height}")
+            temp_files = []
+            positions = list(range(0, page_height, visible_height))
 
-        if "css" in self.get_test_name():
-            total = len(temp_files)
-            quarter = (total + 3) // 4
+            for i, y in enumerate(positions):
 
-            for i in range(4):
-                start = i * quarter
-                end = min((i + 1) * quarter, total)
+                self.webdriver.driver.execute_script(f"window.scrollTo(0, {y})")
+                sleep(1)
+                temp_file = screenshot_path.replace(".png", f"_part_{i}.png")
+                self.webdriver.driver.save_screenshot(temp_file)
+                temp_files.append(temp_file)
 
-                if start >= total:
-                    break
+            if "css" in self.get_test_name():
+                total = len(temp_files)
+                quarter = (total + 3) // 4
 
-                output = screenshot_path.replace(".png", f"_part{i + 1}.png")
-                self.stitch_images(temp_files[start:end], output)
+                for i in range(4):
+                    start = i * quarter
+                    end = min((i + 1) * quarter, total)
 
-        else:
-            self.stitch_images(temp_files, screenshot_path)
+                    if start >= total:
+                        break
+
+                    output = screenshot_path.replace(".png", f"_part{i + 1}.png")
+                    self.stitch_images(temp_files[start:end], output)
+
+            else:
+                self.stitch_images(temp_files, screenshot_path)
+
+        finally:
+            if iframe_mode:
+                self.webdriver.driver.switch_to.default_content()
 
     def collect_screenshot(self, suffix=None):
         base_name = self.get_test_name()
